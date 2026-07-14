@@ -400,7 +400,16 @@ func patchUsageFieldsWithLogTag(usage map[string]interface{}, estimatedInput, es
 	if !inputPatched {
 		if v, ok := usage["input_tokens"].(float64); ok {
 			currentInput := int(v)
-			if !hasCacheTokens && ((currentInput <= 1) || (estimatedInput > currentInput && estimatedInput > 1)) {
+			if hasCacheTokens {
+				// 缓存命中：上游可能只返回非缓存部分的 tokens
+				// 加上缓存读取/创建 tokens 得到总量，避免下游计算时报负数
+				totalInput := currentInput + int(cacheRead) + int(cacheCreation) +
+					int(cacheCreation5m) + int(cacheCreation1h)
+				if totalInput > currentInput {
+					usage["input_tokens"] = totalInput
+					inputPatched = true
+				}
+			} else if currentInput <= 1 || (estimatedInput > currentInput && estimatedInput > 1) {
 				usage["input_tokens"] = estimatedInput
 				inputPatched = true
 			}
