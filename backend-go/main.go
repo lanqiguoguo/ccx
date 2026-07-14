@@ -340,6 +340,11 @@ func main() {
 	applyThinkingCacheConfig(cfgManager.GetConfig())
 	cfgManager.RegisterOnConfigChange(applyThinkingCacheConfig)
 	defer thinkingcache.Close()
+	// 将上游模型能力配置推送给 metrics 包，用于成本计算
+	metrics.SetGlobalUpstreamModelCapabilities(cfgManager.GetConfig().UpstreamModelCapabilities)
+	cfgManager.RegisterOnConfigChange(func(cfg config.Config) {
+		metrics.SetGlobalUpstreamModelCapabilities(cfg.UpstreamModelCapabilities)
+	})
 
 	// 初始化会话管理器（Responses API 专用）
 	sessionManager := session.NewSessionManager(

@@ -461,6 +461,11 @@ func TryUpstreamWithAllKeys(
 					if isTemporarilyOverloaded || isAccountPoolUnavailable {
 						failureClass = metrics.FailureClassOverloaded
 					}
+					// 4xx 客户端错误（非 429/401/403）不应触发熔断
+					// 这类错误通常是模型映射未命中、参数校验等配置问题
+					if failureClass == metrics.FailureClassRetryable && resp.StatusCode >= 400 && resp.StatusCode < 500 && resp.StatusCode != 429 && resp.StatusCode != 401 && resp.StatusCode != 403 {
+						failureClass = metrics.FailureClassClientError
+					}
 					metricsManager.RecordRequestFinalizeFailureWithClass(currentBaseURL, apiKey, metricsServiceType, requestID, failureClass)
 					channelScheduler.RecordRequestEnd(currentBaseURL, apiKey, metricsServiceType, kind)
 					if markURLFailure != nil {

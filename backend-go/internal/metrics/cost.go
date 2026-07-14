@@ -2,18 +2,35 @@ package metrics
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/BenedictKing/ccx/internal/config"
 )
 
 const cnyToUSD = 1.0 / 6.8
 
+var (
+	globalUpstreamCaps   map[string]config.UpstreamModelCapability
+	globalUpstreamCapsMu sync.RWMutex
+)
+
+// SetGlobalUpstreamModelCapabilities 设置全局上游模型能力配置，用于成本计算。
+// 由 main.go 或配置初始化时调用，传入 config.GetConfig().UpstreamModelCapabilities。
+func SetGlobalUpstreamModelCapabilities(caps map[string]config.UpstreamModelCapability) {
+	globalUpstreamCapsMu.Lock()
+	defer globalUpstreamCapsMu.Unlock()
+	globalUpstreamCaps = caps
+}
+
 // CalculateTokenCostUSD 根据当前模型价格估算 token 成本，返回 USD。
 func CalculateTokenCostUSD(model string, inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens int64) float64 {
 	if model == "" || model == "unknown" {
 		return 0
 	}
-	resolved := config.ResolveUpstreamCapability(model, nil, nil)
+	globalUpstreamCapsMu.RLock()
+	global := globalUpstreamCaps
+	globalUpstreamCapsMu.RUnlock()
+	resolved := config.ResolveUpstreamCapability(model, nil, global)
 	pricing := resolved.Capability.Pricing
 	if pricing == nil {
 		return 0

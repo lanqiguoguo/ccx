@@ -21,6 +21,7 @@ const (
 	FailureClassNonRetryable FailureClass = "non_retryable"
 	FailureClassQuota        FailureClass = "quota"
 	FailureClassClientCancel FailureClass = "client_cancel"
+	FailureClassClientError  FailureClass = "client_error"
 )
 
 // IsBreakerRelevant 判断失败类型是否应影响 breaker 状态机。
