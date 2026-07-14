@@ -187,6 +187,19 @@ func buildProviderRequest(
 ) (*http.Request, error) {
 	skipVersionPrefix := strings.HasSuffix(baseURL, "#")
 	baseURL = strings.TrimSuffix(strings.TrimRight(baseURL, "/"), "#")
+
+	// 自动检测 baseURL 是否已含版本前缀（如 /v1, /v2, /v3, /v4）
+	// 未尾 # 可强制跳过此检测
+	hasVersionPrefix := false
+	if !skipVersionPrefix {
+		trimmedURL := strings.TrimRight(baseURL, "/")
+		for _, suffix := range []string{"/v1", "/v2", "/v3", "/v4"} {
+			if strings.HasSuffix(trimmedURL, suffix) {
+				hasVersionPrefix = true
+				break
+			}
+		}
+	}
 	// 应用模型映射
 	effectiveModel := extractRequestModel(bodyBytes, model)
 	mappedModel := config.RedirectModel(effectiveModel, upstream)
@@ -206,7 +219,7 @@ func buildProviderRequest(
 		if strings.Contains(baseURL, "generativelanguage.googleapis.com") && !upstream.StripThoughtSignature {
 			requestBody = injectGeminiThoughtSignatures(requestBody)
 		}
-		if skipVersionPrefix {
+		if skipVersionPrefix || hasVersionPrefix {
 			url = fmt.Sprintf("%s/chat/completions", strings.TrimRight(baseURL, "/"))
 		} else {
 			url = fmt.Sprintf("%s/v1/chat/completions", strings.TrimRight(baseURL, "/"))
@@ -219,7 +232,7 @@ func buildProviderRequest(
 			return nil, err
 		}
 		requestBody = converters.ConvertChatRequestToResponsesRequest(chatBody)
-		if upstream.ServiceType == "copilot" || skipVersionPrefix {
+		if upstream.ServiceType == "copilot" || skipVersionPrefix || hasVersionPrefix {
 			url = fmt.Sprintf("%s/responses", strings.TrimRight(baseURL, "/"))
 		} else {
 			url = fmt.Sprintf("%s/v1/responses", strings.TrimRight(baseURL, "/"))
@@ -258,7 +271,7 @@ func buildProviderRequest(
 		if !upstream.PassbackReasoningContent && !upstream.PassbackThinkingBlocks {
 			requestBody = stripThinkingBlocksFromBody(requestBody)
 		}
-		if skipVersionPrefix {
+		if skipVersionPrefix || hasVersionPrefix {
 			url = fmt.Sprintf("%s/messages", strings.TrimRight(baseURL, "/"))
 		} else {
 			url = fmt.Sprintf("%s/v1/messages", strings.TrimRight(baseURL, "/"))
@@ -276,7 +289,7 @@ func buildProviderRequest(
 		if !upstream.StripThoughtSignature {
 			requestBody = injectGeminiThoughtSignatures(requestBody)
 		}
-		if skipVersionPrefix {
+		if skipVersionPrefix || hasVersionPrefix {
 			url = fmt.Sprintf("%s/chat/completions", strings.TrimRight(baseURL, "/"))
 		} else {
 			url = fmt.Sprintf("%s/v1/chat/completions", strings.TrimRight(baseURL, "/"))
@@ -289,7 +302,7 @@ func buildProviderRequest(
 		if err != nil {
 			return nil, err
 		}
-		if skipVersionPrefix {
+		if skipVersionPrefix || hasVersionPrefix {
 			url = fmt.Sprintf("%s/chat/completions", strings.TrimRight(baseURL, "/"))
 		} else {
 			url = fmt.Sprintf("%s/v1/chat/completions", strings.TrimRight(baseURL, "/"))
