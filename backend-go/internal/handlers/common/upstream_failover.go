@@ -2,6 +2,7 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -487,6 +488,7 @@ func TryUpstreamWithAllKeys(
 					if strings.EqualFold(apiType, "Vectors") {
 						channelErrorInfo = errorBodySummaryForLog(apiType, resp.StatusCode, respBodyBytes)
 					}
+					WithResponseBodyByRequestID(channelLogStore, metricsKey, logRequestID, respBodyBytes)
 					CompleteLog(channelLogStore, metricsKey, logRequestID, resp.StatusCode, false, channelErrorInfo, isRetryAttempt)
 
 					if isQuotaRelated {
@@ -521,7 +523,8 @@ func TryUpstreamWithAllKeys(
 				}
 				metricsManager.RecordRequestFinalizeFailureWithClass(currentBaseURL, apiKey, metricsServiceType, requestID, metrics.FailureClassNonRetryable)
 				channelScheduler.RecordRequestEnd(currentBaseURL, apiKey, metricsServiceType, kind)
-				// 记录渠道日志
+				// 记录渠道日志（注入响应体用于调试）
+				WithResponseBodyByRequestID(channelLogStore, metricsKey, logRequestID, respBodyBytes)
 				CompleteLog(channelLogStore, metricsKey, logRequestID, clientStatusCode, false, channelErrorInfo, isRetryAttempt)
 				c.Data(clientStatusCode, "application/json", respBodyBytes)
 				return true, "", 0, nil, nil, nil
@@ -538,6 +541,16 @@ func TryUpstreamWithAllKeys(
 			if isStream {
 				streamingUserID = trackStreamingConversation(c, channelScheduler, kind, model, channelIndex, upstream.Name)
 				StartStreamTimeoutObservation(c, channelLogStore, metricsKey, logRequestID, time.Now())
+			}
+			// Non-streaming: buffer response body for log capture
+			respBodyBytesForLog := []byte{}
+			if !isStream && resp.Body != nil {
+				var readErr error
+				respBodyBytesForLog, readErr = io.ReadAll(resp.Body)
+				resp.Body.Close()
+				if readErr == nil {
+					resp.Body = io.NopCloser(bytes.NewReader(respBodyBytesForLog))
+				}
 			}
 			usage, err = handleSuccess(c, resp, upstreamCopy, apiKey, attemptBody)
 			if isStream {
@@ -626,6 +639,9 @@ func TryUpstreamWithAllKeys(
 				delete(probeAcquired, probeKey)
 			}
 			// 记录渠道日志
+			if !isStream && len(respBodyBytesForLog) > 0 {
+				WithResponseBodyByRequestID(channelLogStore, metricsKey, logRequestID, respBodyBytesForLog)
+			}
 			CompleteLog(channelLogStore, metricsKey, logRequestID, http.StatusOK, true, "", isRetryAttempt)
 			return true, apiKey, originalIdx, nil, usage, nil
 		}
