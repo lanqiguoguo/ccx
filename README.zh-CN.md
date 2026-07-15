@@ -82,17 +82,7 @@ CCX 对外提供一个统一后端入口：
 
 ## 快速开始
 
-### 方式零：CCX Desktop
 
-CCX Desktop 提供原生桌面体验，通过 GUI 管理渠道、密钥和客户端配置。
-
-| 平台 | 安装方式 | 说明 |
-|------|---------|------|
-| **Windows** | 在 [Microsoft Store](https://apps.microsoft.com/detail/ccx-desktop) 搜索 **CCX Desktop** | 推荐方式。自动更新，无需手动签名。也可从 [GitHub Releases](https://github.com/BenedictKing/ccx/releases/latest) 下载 `setup.exe`。 |
-| **macOS** | `brew tap BenedictKing/ccx && brew install --cask ccx-desktop` | 或从 [GitHub Releases](https://github.com/BenedictKing/ccx/releases/latest) 下载 `.dmg`（支持 arm64/amd64）。 |
-| **Linux** | 从 [GitHub Releases](https://github.com/BenedictKing/ccx/releases/latest) 下载 `.AppImage` | 设置可执行权限后运行。 |
-
-详细安装和配置说明请参考 [CCX Desktop 用户教程](docs/guide/desktop)。
 
 ### 方式一：直接运行二进制
 
@@ -214,7 +204,7 @@ make dev
 
 ## 相关文档
 
-- [CCX Desktop 用户教程](docs/guide/desktop)
+
 - [客户端接入总览](docs/guide/clients)
 - [README.md](README.md)
 - [backend-go/README.md](backend-go/README.md)

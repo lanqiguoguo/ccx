@@ -530,6 +530,8 @@
   "channelLogs.sourceCapabilityTest": "能力测试",
   "channelLogs.selectionReason": "调度",
   "channelLogs.selectionTrace": "调度摘要",
+  "channelLogs.requestBody": "请求体",
+  "channelLogs.responseBody": "响应体",
   "channelLogs.reasoning.original": "原始",
   "channelLogs.reasoning.actual": "发出",
   "channelLogs.duration.connect": "连接",

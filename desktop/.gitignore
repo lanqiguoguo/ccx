@@ -1,8 +1,0 @@
-.task
-bin
-/desktop
-frontend/dist
-frontend/node_modules
-build/linux/appimage/build
-build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
-build/windows/nsis/ccx-go.exe

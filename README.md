@@ -82,17 +82,7 @@ See [ARCHITECTURE.md](docs/guide/architecture.md) for the detailed design.
 
 ## Quick Start
 
-### Option 0: CCX Desktop
 
-CCX Desktop provides a native desktop experience with GUI for managing channels, keys, and agent configuration.
-
-| Platform | Install Method | Notes |
-|----------|---------------|-------|
-| **Windows** | Search **CCX Desktop** in [Microsoft Store](https://apps.microsoft.com/detail/ccx-desktop) | Recommended. Auto-update, no manual signing. Also available as `setup.exe` from [GitHub Releases](https://github.com/BenedictKing/ccx/releases/latest). |
-| **macOS** | `brew tap BenedictKing/ccx && brew install --cask ccx-desktop` | Or download `.dmg` (arm64/amd64) from [GitHub Releases](https://github.com/BenedictKing/ccx/releases/latest). |
-| **Linux** | Download `.AppImage` from [GitHub Releases](https://github.com/BenedictKing/ccx/releases/latest) | Mark as executable and run. |
-
-See [CCX Desktop Guide](docs/en/guide/desktop/) for detailed setup instructions.
 
 ### Option 1: Binary
 
@@ -214,9 +204,7 @@ make dev
 
 ## Additional Docs
 
-- [CCX Desktop](docs/en/guide/desktop/)
 - [Client Setup](docs/en/guide/clients/)
-- [CCX Desktop (中文)](docs/guide/desktop/)
 - [Client Setup (中文)](docs/guide/clients/)
 - [README.zh-CN.md](README.zh-CN.md)
 - [backend-go/README.md](backend-go/README.md)

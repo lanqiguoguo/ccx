@@ -48,12 +48,19 @@ type ChannelLog struct {
 	ParentThreadID  string `json:"parentThreadId,omitempty"`  // Codex parent thread id
 	AgentConfidence string `json:"agentConfidence,omitempty"` // exact | heuristic
 	SessionID       string `json:"sessionId,omitempty"`       // 扁平化会话标识（用于驾驶舱关联）
+
+	// 原始请求/响应体（Portkey 风格排查日志，受 ENABLE_RAW_CHANNEL_LOG 开关与 MaxChannelLogBodyBytes 限制，已脱敏）
+	RequestBody  string `json:"requestBody,omitempty"`
+	ResponseBody string `json:"responseBody,omitempty"`
 }
 
 const (
 	RequestSourceProxy          = "proxy"
 	RequestSourceCapabilityTest = "capability_test"
 	maxChannelLogs              = 50
+
+	// 单条 ChannelLog 的 RequestBody/ResponseBody 最大字节数（超限截断并标记 truncated）。
+	MaxChannelLogBodyBytes = 64 * 1024
 
 	// 请求状态常量
 	StatusPending    = "pending"

@@ -530,6 +530,8 @@
   "channelLogs.sourceCapabilityTest": "Capability Test",
   "channelLogs.selectionReason": "Selection",
   "channelLogs.selectionTrace": "Selection trace",
+  "channelLogs.requestBody": "Request body",
+  "channelLogs.responseBody": "Response body",
   "channelLogs.reasoning.original": "Original",
   "channelLogs.reasoning.actual": "Sent",
   "channelLogs.duration.connect": "Connect",

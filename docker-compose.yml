@@ -34,6 +34,8 @@ services:
       - ENABLE_REQUEST_LOGS=false
       # 是否启用响应日志
       - ENABLE_RESPONSE_LOGS=false
+      # 是否把原始请求/响应体写入 ChannelLog 内存日志（Portkey 风格排查日志，默认关闭，开启后受 64KB 截断并脱敏）
+      - ENABLE_RAW_CHANNEL_LOG=false
     # 健康检查配置
     healthcheck:
       test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/health']

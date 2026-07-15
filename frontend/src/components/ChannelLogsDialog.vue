@@ -167,6 +167,25 @@
                   <div class="log-detail-label">{{ t('channelLogs.selectionTrace') }}</div>
                   <code class="log-selection-trace">{{ log.selectionTraceSummary }}</code>
                 </div>
+                <!-- Portkey 风格原始请求/响应体（受 ENABLE_RAW_CHANNEL_LOG 开关 + 脱敏 + 64KB 截断） -->
+                <div v-if="log.requestBody" class="mt-2">
+                  <div class="log-detail-label">
+                    {{ t('channelLogs.requestBody') }}
+                    <v-btn icon size="x-small" variant="text" @click.stop="writeClipboardText(log.requestBody ?? '')">
+                      <v-icon size="small">mdi-content-copy</v-icon>
+                    </v-btn>
+                  </div>
+                  <pre class="log-body-block"><code>{{ log.requestBody }}</code></pre>
+                </div>
+                <div v-if="log.responseBody" class="mt-2">
+                  <div class="log-detail-label">
+                    {{ t('channelLogs.responseBody') }}
+                    <v-btn icon size="x-small" variant="text" @click.stop="writeClipboardText(log.responseBody ?? '')">
+                      <v-icon size="small">mdi-content-copy</v-icon>
+                    </v-btn>
+                  </div>
+                  <pre class="log-body-block"><code>{{ log.responseBody }}</code></pre>
+                </div>
               </div>
             </v-expand-transition>
             <v-divider v-if="i < logs.length - 1" />
@@ -263,7 +282,7 @@ const toggleExpand = (i: number) => {
 }
 
 const hasLogDetails = (log: ChannelLogEntry): boolean => {
-  return Boolean(log.errorInfo?.trim() || log.selectionTraceSummary?.trim())
+  return Boolean(log.errorInfo?.trim() || log.selectionTraceSummary?.trim() || log.requestBody?.trim() || log.responseBody?.trim())
 }
 
 const statusColor = (code: number): string => {
@@ -598,6 +617,26 @@ onUnmounted(() => {
   white-space: pre-wrap;
   word-break: break-all;
   font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Portkey 风格原始请求/响应体展示块 */
+.log-body-block {
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;
+  padding: 8px 10px;
+  background: rgba(var(--v-theme-on-surface), 0.05);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.log-body-block > code {
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .bg-error-subtle {

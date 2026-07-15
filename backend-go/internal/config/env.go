@@ -24,6 +24,9 @@ type EnvConfig struct {
 	LogLevel             string
 	EnableRequestLogs    bool
 	EnableResponseLogs   bool
+	// EnableRawChannelLog 控制是否把原始请求/响应体写入 ChannelLog 内存环形缓冲（Portkey 风格排查日志）。
+	// 默认关闭；开启后受 MaxChannelLogBodyBytes 截断并脱敏，仅用于排查，不落 SQLite。
+	EnableRawChannelLog  bool
 	QuietPollingLogs     bool   // 静默轮询端点日志
 	RawLogOutput         bool   // 原始日志输出（不缩进、不截断、不重排序）
 	SSEDebugLevel        string // SSE 调试级别: off, summary, full
@@ -78,6 +81,7 @@ func NewEnvConfig() *EnvConfig {
 		LogLevel:             getEnv("LOG_LEVEL", "info"),
 		EnableRequestLogs:    getEnv("ENABLE_REQUEST_LOGS", "true") != "false",
 		EnableResponseLogs:   getEnv("ENABLE_RESPONSE_LOGS", "true") != "false",
+		EnableRawChannelLog:  getEnv("ENABLE_RAW_CHANNEL_LOG", "false") == "true",
 		QuietPollingLogs:     getEnv("QUIET_POLLING_LOGS", "true") != "false",
 		RawLogOutput:         getEnv("RAW_LOG_OUTPUT", "false") == "true",
 		SSEDebugLevel:        getEnv("SSE_DEBUG_LEVEL", "off"),

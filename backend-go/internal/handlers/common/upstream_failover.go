@@ -368,6 +368,8 @@ func TryUpstreamWithAllKeys(
 			metricsKey := metrics.GenerateMetricsIdentityKey(currentBaseURL, apiKey, metricsServiceType)
 
 			// 创建 pending 状态日志（附带代理上下文与会话标识，用于 subagent 观测）
+			// Portkey 风格：把实际转发给上游的请求体注入 ChannelLog（受 ENABLE_RAW_CHANNEL_LOG 开关 + 脱敏 + 截断）。
+			tryOpts.channelLogOptions = append(tryOpts.channelLogOptions, WithRequestBody(attemptBody, envCfg, apiType))
 			logRequestID := CreatePendingLog(channelLogStore, metricsKey, channelIndex, upstream.Name, redirectedModel, originalModel, originalReasoningEffort, actualReasoningEffort, apiKey, currentBaseURL, apiType, operation, metrics.RequestSourceProxy, AgentContextFromGin(c), SessionIDFromGin(c), tryOpts.channelLogOptions...)
 
 			// TCP 建连开始即计数：将活跃度统计提前到发起上游请求之前
@@ -482,7 +484,7 @@ func TryUpstreamWithAllKeys(
 					if strings.EqualFold(apiType, "Vectors") {
 						channelErrorInfo = errorBodySummaryForLog(apiType, resp.StatusCode, respBodyBytes)
 					}
-					CompleteLog(channelLogStore, metricsKey, logRequestID, resp.StatusCode, false, channelErrorInfo, isRetryAttempt)
+					CompleteLog(channelLogStore, metricsKey, logRequestID, resp.StatusCode, false, channelErrorInfo, isRetryAttempt, WithResponseBody(respBodyBytes, envCfg, apiType))
 
 					if isQuotaRelated {
 						deprioritizeCandidates[apiKey] = true
@@ -517,7 +519,7 @@ func TryUpstreamWithAllKeys(
 				metricsManager.RecordRequestFinalizeFailureWithClass(currentBaseURL, apiKey, metricsServiceType, requestID, metrics.FailureClassNonRetryable)
 				channelScheduler.RecordRequestEnd(currentBaseURL, apiKey, metricsServiceType, kind)
 				// 记录渠道日志
-				CompleteLog(channelLogStore, metricsKey, logRequestID, clientStatusCode, false, channelErrorInfo, isRetryAttempt)
+				CompleteLog(channelLogStore, metricsKey, logRequestID, clientStatusCode, false, channelErrorInfo, isRetryAttempt, WithResponseBody(respBodyBytes, envCfg, apiType))
 				c.Data(clientStatusCode, "application/json", respBodyBytes)
 				return true, "", 0, nil, nil, nil
 			}

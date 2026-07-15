@@ -4,9 +4,11 @@ package common
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/BenedictKing/ccx/internal/config"
 	"github.com/BenedictKing/ccx/internal/metrics"
 	"github.com/BenedictKing/ccx/internal/types"
 	"github.com/BenedictKing/ccx/internal/utils"
@@ -32,6 +34,29 @@ func WithChannelSelectionTrace(reason, summary string) ChannelLogOption {
 		}
 		log.SelectionReason = reason
 		log.SelectionTraceSummary = summary
+	}
+}
+
+// WithRequestBody 注入原始请求体到 ChannelLog（Portkey 风格排查日志）。
+// 受 envCfg.EnableRawChannelLog 开关控制；multipart/二进制体以摘要形式记录；
+// 始终经过 RedactSensitiveTextForLog 脱敏并截断到 metrics.MaxChannelLogBodyBytes。
+func WithRequestBody(body []byte, envCfg *config.EnvConfig, apiType string) ChannelLogOption {
+	return func(log *metrics.ChannelLog) {
+		if log == nil {
+			return
+		}
+		log.RequestBody = sanitizeChannelLogBody(body, envCfg, apiType)
+	}
+}
+
+// WithResponseBody 注入原始响应体到 ChannelLog（Portkey 风格排查日志）。
+// 语义同 WithRequestBody，适用于错误分支的上游响应原文。
+func WithResponseBody(body []byte, envCfg *config.EnvConfig, apiType string) ChannelLogOption {
+	return func(log *metrics.ChannelLog) {
+		if log == nil {
+			return
+		}
+		log.ResponseBody = sanitizeChannelLogBody(body, envCfg, apiType)
 	}
 }
 
@@ -128,7 +153,8 @@ func UpdateLogStatus(
 	})
 }
 
-// CompleteLog 完成日志记录（请求结束时调用）
+// CompleteLog 完成日志记录（请求结束时调用）。
+// opts 可选注入响应体等观测字段（WithResponseBody 等），向后兼容。
 func CompleteLog(
 	channelLogStore *metrics.ChannelLogStore,
 	metricsKey string,
@@ -137,6 +163,7 @@ func CompleteLog(
 	success bool,
 	errorInfo string,
 	isRetry bool,
+	opts ...ChannelLogOption,
 ) {
 	if channelLogStore == nil || metricsKey == "" || requestID == "" {
 		return
@@ -157,11 +184,16 @@ func CompleteLog(
 		log.CompletedAt = &now
 		log.DurationMs = now.Sub(log.StartTime).Milliseconds()
 		log.Status = status
+		for _, opt := range opts {
+			if opt != nil {
+				opt(log)
+			}
+		}
 	})
 
 	// 仅在确认是环形缓冲淘汰时补写终态日志；若渠道已删除则不补写，避免污染其他渠道。
 	if updateStatus == metrics.UpdateMissingEvicted && actualMetricsKey != "" {
-		channelLogStore.Record(actualMetricsKey, &metrics.ChannelLog{
+		fallbackLog := &metrics.ChannelLog{
 			RequestID:   requestID,
 			Timestamp:   now,
 			StatusCode:  statusCode,
@@ -172,7 +204,13 @@ func CompleteLog(
 			StartTime:   now,
 			CompletedAt: &now,
 			DurationMs:  0,
-		})
+		}
+		for _, opt := range opts {
+			if opt != nil {
+				opt(fallbackLog)
+			}
+		}
+		channelLogStore.Record(actualMetricsKey, fallbackLog)
 	}
 }
 
@@ -302,4 +340,36 @@ func normalizeChannelLogErrorInfo(errorInfo string) string {
 	default:
 		return errorInfo
 	}
+}
+
+// RedactSensitiveTextForLog 对文本中的 Bearer token、authorization/x-api-key 等敏感赋值做脱敏。
+// 复用 stream.go 的包级正则 streamPreflightBearerPattern / streamPreflightSensitiveAssignmentPattern，
+// 供 ChannelLog 请求/响应体注入与流式预检测日志共用同一套口径。
+func RedactSensitiveTextForLog(text string) string {
+	text = streamPreflightBearerPattern.ReplaceAllString(text, "${1}***")
+	return streamPreflightSensitiveAssignmentPattern.ReplaceAllString(text, "${1}***")
+}
+
+// sanitizeChannelLogBody 按环境开关与渠道类型，把原始 body 转成 ChannelLog 可安全持久化的字符串。
+// 规则：
+//   - envCfg 为 nil 或 EnableRawChannelLog 关闭：返回空串（不记录）。
+//   - apiType 命中 shouldOmitBodyForLog（当前为 Vectors）：返回 "[omitted]"，避免二进制嵌入向量泄露。
+//   - 其余情况：先经 RedactSensitiveTextForLog 脱敏，再截断到 metrics.MaxChannelLogBodyBytes，
+//     超限追加 "...[truncated at N/total bytes]" 标记。
+func sanitizeChannelLogBody(body []byte, envCfg *config.EnvConfig, apiType string) string {
+	if envCfg == nil || !envCfg.EnableRawChannelLog {
+		return ""
+	}
+	if shouldOmitBodyForLog(apiType) {
+		return "[omitted]"
+	}
+	if len(body) == 0 {
+		return ""
+	}
+	raw := RedactSensitiveTextForLog(string(body))
+	limit := metrics.MaxChannelLogBodyBytes
+	if len(raw) <= limit {
+		return raw
+	}
+	return raw[:limit] + fmt.Sprintf("...[truncated at %d/%d bytes]", limit, len(raw))
 }
