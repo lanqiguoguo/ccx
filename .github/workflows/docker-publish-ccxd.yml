@@ -43,11 +43,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: |
-            latest=auto
+            latest=false
           tags: |
-            type=ref,event=branch
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/ccxd' }}
             type=ref,event=tag
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/ccxd' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
