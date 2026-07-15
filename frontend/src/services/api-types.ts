@@ -614,6 +614,10 @@ export interface ChannelLogEntry {
   parentThreadId?: string    // Codex parent thread id
   agentConfidence?: string   // exact | heuristic
   sessionId?: string         // 扁平化会话标识（用于驾驶舱关联）
+
+  // 原始请求/响应体（用于调试和审计）
+  requestBody?: string
+  responseBody?: string
 }
 
 export interface ChannelLogsResponse {

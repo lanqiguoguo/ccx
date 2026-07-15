@@ -167,6 +167,14 @@
                   <div class="log-detail-label">{{ t('channelLogs.selectionTrace') }}</div>
                   <code class="log-selection-trace">{{ log.selectionTraceSummary }}</code>
                 </div>
+                <div v-if="log.requestBody" class="mt-2">
+                  <div class="log-detail-label">{{ t('channelLogs.requestBody') }}</div>
+                  <pre class="log-json-body"><code>{{ formatJson(log.requestBody) }}</code></pre>
+                </div>
+                <div v-if="log.responseBody" class="mt-2">
+                  <div class="log-detail-label">{{ t('channelLogs.responseBody') }}</div>
+                  <pre class="log-json-body"><code>{{ formatJson(log.responseBody) }}</code></pre>
+                </div>
               </div>
             </v-expand-transition>
             <v-divider v-if="i < logs.length - 1" />
@@ -263,7 +271,7 @@ const toggleExpand = (i: number) => {
 }
 
 const hasLogDetails = (log: ChannelLogEntry): boolean => {
-  return Boolean(log.errorInfo?.trim() || log.selectionTraceSummary?.trim())
+  return Boolean(log.errorInfo?.trim() || log.selectionTraceSummary?.trim() || log.requestBody?.trim() || log.responseBody?.trim())
 }
 
 const statusColor = (code: number): string => {
@@ -322,6 +330,14 @@ const calculateDurations = (log: ChannelLogEntry) => {
 const formatDurationSeconds = (durationMs: number): string => {
   const seconds = durationMs / 1000
   return `${Number.parseFloat(seconds.toPrecision(3))}s`
+}
+
+const formatJson = (jsonStr: string): string => {
+  try {
+    return JSON.stringify(JSON.parse(jsonStr), null, 2)
+  } catch {
+    return jsonStr
+  }
 }
 
 const formatReasoningEffort = (effort: string): string => {
@@ -602,5 +618,18 @@ onUnmounted(() => {
 
 .bg-error-subtle {
   background: rgba(var(--v-theme-error), 0.05);
+}
+
+.log-json-body {
+  max-height: 300px;
+  overflow: auto;
+  background: rgba(var(--v-theme-surface-variant), 0.15);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 </style>
