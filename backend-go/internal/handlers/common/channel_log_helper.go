@@ -35,6 +35,34 @@ func WithChannelSelectionTrace(reason, summary string) ChannelLogOption {
 	}
 }
 
+// WithRequestBody 记录请求体到渠道日志（受 ENABLE_RAW_CHANNEL_LOG 控制）。
+func WithRequestBody(body []byte) ChannelLogOption {
+	return func(log *metrics.ChannelLog) {
+		if log == nil || len(body) == 0 {
+			return
+		}
+		s := string(body)
+		if len(s) > metrics.MaxChannelLogBodyBytes {
+			s = s[:metrics.MaxChannelLogBodyBytes]
+		}
+		log.RequestBody = s
+	}
+}
+
+// WithResponseBody 记录响应体到渠道日志（受 ENABLE_RAW_CHANNEL_LOG 控制）。
+func WithResponseBody(body []byte) ChannelLogOption {
+	return func(log *metrics.ChannelLog) {
+		if log == nil || len(body) == 0 {
+			return
+		}
+		s := string(body)
+		if len(s) > metrics.MaxChannelLogBodyBytes {
+			s = s[:metrics.MaxChannelLogBodyBytes]
+		}
+		log.ResponseBody = s
+	}
+}
+
 // CreatePendingLog 创建 pending 状态的日志条目（请求开始时调用）
 func CreatePendingLog(
 	channelLogStore *metrics.ChannelLogStore,
@@ -302,4 +330,22 @@ func normalizeChannelLogErrorInfo(errorInfo string) string {
 	default:
 		return errorInfo
 	}
+}
+
+// WithResponseBodyByRequestID 将响应体写入指定 requestID 的渠道日志。
+// 适用于非流式响应完成时补写 ResponseBody。
+func WithResponseBodyByRequestID(channelLogStore *metrics.ChannelLogStore, metricsKey string, requestID string, body []byte) {
+	if channelLogStore == nil || metricsKey == "" || requestID == "" || len(body) == 0 {
+		return
+	}
+	channelLogStore.Update(metricsKey, requestID, func(log *metrics.ChannelLog) {
+		if log == nil {
+			return
+		}
+		s := string(body)
+		if len(s) > metrics.MaxChannelLogBodyBytes {
+			s = s[:metrics.MaxChannelLogBodyBytes]
+		}
+		log.ResponseBody = s
+	})
 }

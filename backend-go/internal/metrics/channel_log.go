@@ -48,12 +48,17 @@ type ChannelLog struct {
 	ParentThreadID  string `json:"parentThreadId,omitempty"`  // Codex parent thread id
 	AgentConfidence string `json:"agentConfidence,omitempty"` // exact | heuristic
 	SessionID       string `json:"sessionId,omitempty"`       // 扁平化会话标识（用于驾驶舱关联）
+
+	// 原始请求/响应体（用于调试和审计，受 ENABLE_RAW_CHANNEL_LOG 控制）
+	RequestBody  string `json:"requestBody,omitempty"`  // 完整请求 JSON（脱敏后，64KB 截断）
+	ResponseBody string `json:"responseBody,omitempty"` // 完整响应 JSON（脱敏后，64KB 截断）
 }
 
 const (
 	RequestSourceProxy          = "proxy"
 	RequestSourceCapabilityTest = "capability_test"
 	maxChannelLogs              = 50
+	MaxChannelLogBodyBytes      = 64 * 1024 // 64KB 截断
 
 	// 请求状态常量
 	StatusPending    = "pending"

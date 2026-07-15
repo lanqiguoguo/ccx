@@ -28,6 +28,7 @@ type EnvConfig struct {
 	RawLogOutput         bool   // 原始日志输出（不缩进、不截断、不重排序）
 	SSEDebugLevel        string // SSE 调试级别: off, summary, full
 	RewriteResponseModel bool   // 是否改写响应中的 model 字段为请求的 model（默认 false）
+	EnableRawChannelLog  bool   // 是否在渠道日志中记录完整请求/响应体（默认 true）
 	ServerReadTimeout    int    // HTTP 服务端读取请求超时（毫秒），仅用于入站连接读取
 
 	RequestTimeout     int
@@ -81,6 +82,7 @@ func NewEnvConfig() *EnvConfig {
 		QuietPollingLogs:     getEnv("QUIET_POLLING_LOGS", "true") != "false",
 		RawLogOutput:         getEnv("RAW_LOG_OUTPUT", "false") == "true",
 		SSEDebugLevel:        getEnv("SSE_DEBUG_LEVEL", "off"),
+		EnableRawChannelLog:  getEnv("ENABLE_RAW_CHANNEL_LOG", "true") != "false",
 		RewriteResponseModel: getEnv("REWRITE_RESPONSE_MODEL", "false") == "true",
 		ServerReadTimeout:    clampInt(getEnvAsInt("SERVER_READ_TIMEOUT", 60000), 10000, 300000),
 
