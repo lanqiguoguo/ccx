@@ -63,6 +63,32 @@ func WithResponseBody(body []byte) ChannelLogOption {
 	}
 }
 
+// WithRequestHeaders 记录请求头到渠道日志（受 ENABLE_RAW_CHANNEL_LOG 控制）。
+func WithRequestHeaders(headers map[string]string) ChannelLogOption {
+	return func(log *metrics.ChannelLog) {
+		if log == nil || len(headers) == 0 {
+			return
+		}
+		sanitized := utils.MaskSensitiveHeaders(headers)
+		if len(sanitized) > 0 {
+			log.RequestHeaders = sanitized
+		}
+	}
+}
+
+// WithResponseHeaders 记录响应头到渠道日志（受 ENABLE_RAW_CHANNEL_LOG 控制）。
+func WithResponseHeaders(headers map[string]string) ChannelLogOption {
+	return func(log *metrics.ChannelLog) {
+		if log == nil || len(headers) == 0 {
+			return
+		}
+		sanitized := utils.MaskSensitiveHeaders(headers)
+		if len(sanitized) > 0 {
+			log.ResponseHeaders = sanitized
+		}
+	}
+}
+
 // CreatePendingLog 创建 pending 状态的日志条目（请求开始时调用）
 func CreatePendingLog(
 	channelLogStore *metrics.ChannelLogStore,

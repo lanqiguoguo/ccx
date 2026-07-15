@@ -368,3 +368,19 @@ func ForwardResponseHeaders(upstreamHeaders http.Header, clientWriter http.Respo
 		}
 	}
 }
+
+// HeadersToMap 将 http.Header 转换为 map[string]string 用于日志记录。
+func HeadersToMap(headers http.Header) map[string]string {
+	if len(headers) == 0 {
+		return nil
+	}
+	result := make(map[string]string, len(headers))
+	for k, v := range headers {
+		if len(v) == 1 {
+			result[k] = v[0]
+		} else {
+			result[k] = strings.Join(v, ", ")
+		}
+	}
+	return result
+}

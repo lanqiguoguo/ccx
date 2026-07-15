@@ -52,6 +52,10 @@ type ChannelLog struct {
 	// 原始请求/响应体（用于调试和审计，受 ENABLE_RAW_CHANNEL_LOG 控制）
 	RequestBody  string `json:"requestBody,omitempty"`  // 完整请求 JSON（脱敏后，64KB 截断）
 	ResponseBody string `json:"responseBody,omitempty"` // 完整响应 JSON（脱敏后，64KB 截断）
+
+	// 原始请求/响应头（用于调试和审计，受 ENABLE_RAW_CHANNEL_LOG 控制）
+	RequestHeaders  map[string]string `json:"requestHeaders,omitempty"`  // 请求头（脱敏后）
+	ResponseHeaders map[string]string `json:"responseHeaders,omitempty"` // 响应头（脱敏后）
 }
 
 const (
