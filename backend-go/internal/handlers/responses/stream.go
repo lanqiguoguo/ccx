@@ -749,6 +749,17 @@ streamEnd:
 			}
 		}
 	}
+	// Store stream response body for ChannelLog
+	if synthesizer != nil {
+		if content := synthesizer.GetSynthesizedContent(); content != "" && !synthesizer.IsParseFailed() {
+			c.Set("streamResponseBody", strings.TrimSpace(content))
+		} else if logBuffer.Len() > 0 {
+			c.Set("streamResponseBody", logBuffer.String())
+		}
+	} else if logBuffer.Len() > 0 {
+		c.Set("streamResponseBody", logBuffer.String())
+	}
+
 
 	// 返回收集到的 usage 数据
 	return metricsUsageFromResponsesUsage(types.ResponsesUsage{

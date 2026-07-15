@@ -1306,6 +1306,17 @@ func HandleStreamResponse(
 
 	usage, err := ProcessStreamEvents(c, w, flusher, eventChan, errChan, ctx, envCfg, startTime, requestBody, timeouts)
 	c.Set("responseText", ctx.ResponseText)
+	
+	// Store stream response body for ChannelLog
+	if ctx.Synthesizer != nil {
+		if content := ctx.Synthesizer.GetSynthesizedContent(); content != "" && !ctx.Synthesizer.IsParseFailed() {
+			c.Set("streamResponseBody", content)
+		} else if ctx.LogBuffer.Len() > 0 {
+			c.Set("streamResponseBody", ctx.LogBuffer.String())
+		}
+	} else if ctx.LogBuffer.Len() > 0 {
+		c.Set("streamResponseBody", ctx.LogBuffer.String())
+	}
 	if err != nil {
 		return nil, err
 	}

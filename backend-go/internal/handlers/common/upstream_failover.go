@@ -641,6 +641,12 @@ func TryUpstreamWithAllKeys(
 			// 记录渠道日志
 			if !isStream && len(respBodyBytesForLog) > 0 {
 				WithResponseBodyByRequestID(channelLogStore, metricsKey, logRequestID, respBodyBytesForLog)
+			} else if isStream {
+				if bodyVal, exists := c.Get("streamResponseBody"); exists {
+					if bodyStr, ok := bodyVal.(string); ok && len(bodyStr) > 0 {
+						WithResponseBodyByRequestID(channelLogStore, metricsKey, logRequestID, []byte(bodyStr))
+					}
+				}
 			}
 			CompleteLog(channelLogStore, metricsKey, logRequestID, http.StatusOK, true, "", isRetryAttempt)
 			return true, apiKey, originalIdx, nil, usage, nil

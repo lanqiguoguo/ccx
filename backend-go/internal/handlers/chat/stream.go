@@ -87,6 +87,11 @@ func handleStreamSuccess(
 		}
 	}
 
+	// Store stream response body for ChannelLog
+	if logBuffer.Len() > 0 {
+		c.Set("streamResponseBody", logBuffer.String())
+	}
+
 	return totalUsage, nil
 }
 
