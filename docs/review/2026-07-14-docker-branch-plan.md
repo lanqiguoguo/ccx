@@ -116,12 +116,26 @@
 - `components/ChannelLogsDialog.vue`：详情展开区新增两个折叠的只读代码块 + JSON 美化 + 复制按钮（复用现有 `copyLogEntry` 模式）
 - `plugins/vuetify.ts`：如新增 `VCode` / `VExpansionPanels` 在此注册
 
-### 阶段 4 — 验证（不提交、不推送）
+### 阶段 4 — 验证（最终结果）
 
-- `make build`
-- `cd backend-go && make test`
-- `cd frontend && bun run build`
-- `git status` + `git diff --stat` 交给你 review 后再决定是否提交
+| 项 | 结果 |
+|---|---|
+| `go vet ./...`（嵌入前端产物后） | exit 0 |
+| `go test ./...` 全包 | 除 `thinkingcache` 2 个 Windows SQLite TempDir 清理问题（pre-existing，未触碰该包）外全过 |
+| `bun run build`（含 `vue-tsc --noEmit` + `vite build`） | exit 0 |
+| `channel_log_body_test.go` 8 用例 | 全过 |
+
+### 阶段 5 — GitHub Actions 配置与 Docker Hub 推送（已落地）
+
+新增 `.github/workflows/docker-hub-dev.yml`：
+- 触发：push 到 `main` 或 `feat/docker`，支持 `workflow_dispatch` 手动
+- 登录 Docker Hub：username=`lanqiguoguo`，password=Repository secret `DOCKER_KEY`
+- 构建平台：`linux/amd64,linux/arm64`
+- 产物 tag：`lanqiguoguo/ccx:dev`（同时附带 `dev-<short-sha>`）
+- build-args：`VERSION=dev`
+- 启用 GitHub Actions cache（`type=gha`）
+
+首次运行结果（run id `29393497080`）：**成功**，镜像 `lanqiguoguo/ccx:dev` 已推送至 Docker Hub，多架构 manifest digest `sha256:400a4873...`。
 
 ## 七、风险与注意事项
 
